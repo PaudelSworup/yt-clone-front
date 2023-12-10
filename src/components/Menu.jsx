@@ -18,7 +18,8 @@ import FlagOutlinedIcon from "@mui/icons-material/FlagOutlined";
 import HelpOutlineOutlinedIcon from "@mui/icons-material/HelpOutlineOutlined";
 import SettingsBrightnessOutlinedIcon from "@mui/icons-material/SettingsBrightnessOutlined";
 import { Link } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from "../redux/userSlice";
 const Container = styled.div`
   flex: 1;
   background-color: ${({ theme }) => theme.bgLighter};
@@ -85,19 +86,27 @@ const Title = styled.h2`
 const Menu = ({ darkMode, setDarkMode }) => {
   const { currentUser } = useSelector((state) => state?.user);
 
+  const dispatch = useDispatch();
+
+  const Logout = () => {
+    dispatch(logout());
+  };
+
   return (
     <Container>
       <Wrapper>
         <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
           <Logo>
             <Img src={LamaTube} />
-            LamaTube
+            SanTube
           </Logo>
         </Link>
-        <Item>
-          <HomeIcon />
-          Home
-        </Item>
+        <Link to="/" style={{ textDecoration: "none", color: "inherit" }}>
+          <Item>
+            <HomeIcon />
+            Home
+          </Item>
+        </Link>
         <Link to="trends" style={{ textDecoration: "none", color: "inherit" }}>
           <Item>
             <ExploreOutlinedIcon />
@@ -137,7 +146,7 @@ const Menu = ({ darkMode, setDarkMode }) => {
             <Hr />
           </>
         )}
-        <Title>BEST OF LAMATUBE</Title>
+        <Title>BEST OF SanTUBE</Title>
         <Item>
           <LibraryMusicOutlinedIcon />
           Music
@@ -178,6 +187,11 @@ const Menu = ({ darkMode, setDarkMode }) => {
         <Item onClick={() => setDarkMode(!darkMode)}>
           <SettingsBrightnessOutlinedIcon />
           {darkMode ? "Light" : "Dark"} Mode
+        </Item>
+
+        <Item onClick={Logout}>
+          <HelpOutlineOutlinedIcon />
+          Logout
         </Item>
       </Wrapper>
     </Container>

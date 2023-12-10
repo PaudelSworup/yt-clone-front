@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import Card from "../components/Card";
 import axios from "axios";
+import { api } from "../config";
 const Container = styled.div`
   display: flex;
   justify-content: space-between;
@@ -13,7 +14,7 @@ const Home = ({ type }) => {
 
   useEffect(() => {
     const fetchVideos = async () => {
-      const res = await axios.get(`/videos/${type}`);
+      const res = await axios.get(`${api}/videos/${type}`);
       setVideos(res?.data);
     };
     fetchVideos();

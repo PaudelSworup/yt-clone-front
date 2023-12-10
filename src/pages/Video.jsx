@@ -15,6 +15,11 @@ import { dislike, fetchSuccess, like } from "../redux/videoSlice";
 import { format } from "timeago.js";
 import { subscription } from "../redux/userSlice";
 import Recommendation from "../components/Recommendation";
+import RecommendationsVideo from "../components/RecommendationsVideo";
+import { api } from "../config";
+import { FaStar, Fastar } from "react-icons/fa";
+import { getRating, recordRating } from "../apis/apis";
+import { toast } from "react-toastify";
 
 const Container = styled.div`
   display: flex;
@@ -116,6 +121,34 @@ const VideoFrame = styled.video`
   object-fit: cover;
 `;
 
+const StarRatingContainer = styled.div`
+  display: flex;
+  text-align: center;
+  font-size: 3rem;
+  gap: 1.25rem;
+  color: #212121;
+
+  & .star-container {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  & .star {
+    cursor: pointer;
+    color: #9e9e9e;
+
+    &.active {
+      color: #ffd700; /* Yellow color for active/starred state */
+    }
+  }
+
+  & .rating-text {
+    color: #000;
+    font-size: 1.5rem;
+    font-weight: lighter;
+  }
+`;
+
 const Video = () => {
   const { currentUser } = useSelector((state) => state?.user);
   const { currentVideo } = useSelector((state) => state?.video);
@@ -124,13 +157,66 @@ const Video = () => {
   const path = useLocation().pathname.split("/")[2];
 
   const [channel, setChannel] = useState({});
+  const [rating, setRating] = useState(0);
+
+  const handleStarHover = (hoverRating) => {
+    setRating(hoverRating);
+  };
+
+  const fetchRating = async (id) => {
+    const ratings = await getRating(id);
+    console.log(ratings?.data?.video);
+    const ratingdata = ratings?.data?.video?.find((data) => {
+      return data?.user === currentUser?._id && data?.video?._id === path;
+    });
+    return ratingdata?.rating;
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchRatingData = async () => {
+      try {
+        const fetchedRating = await fetchRating(path);
+        if (isMounted) {
+          setRating(fetchedRating);
+        }
+      } catch (error) {
+        console.error("Error fetching rating:", error);
+      }
+    };
+
+    fetchRatingData();
+
+    return () => {
+      isMounted = false; // Cleanup to avoid state updates on unmounted component
+    };
+  }, [currentUser?._id]);
+
+  const handleStarClick = (rating) => {
+    console.log(rating);
+    recordRating({ rating, video: path, user: currentUser?._id }).then(
+      (data) => {
+        if (data.error) {
+          return toast.error(data.error, {
+            position: "top-center",
+            autoClose: 3000,
+          });
+        } else {
+          return toast.success(data.message, {
+            position: "top-center",
+          });
+        }
+      }
+    );
+  };
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const videoRes = await axios.get(`/videos/find/${path}`);
+        const videoRes = await axios.get(`${api}/videos/find/${path}`);
         const channelRes = await axios.get(
-          `/users/find/${videoRes?.data?.userId}`
+          `${api}/users/find/${videoRes?.data?.userId}`
         );
         setChannel(channelRes.data);
         dispatch(fetchSuccess(videoRes?.data));
@@ -139,19 +225,40 @@ const Video = () => {
     fetchData();
   }, [path, dispatch]);
 
+  useEffect(() => {
+    const fetchRating = async () => {
+      try {
+        const recommendationRes = await axios.get(
+          `${api}/ratings/rate/656b4f8d0fab4ae5f7b57b8d`
+        );
+        // console.log("hello", recommendationRes?.data);
+        const ratingData = recommendationRes?.data?.video?.find((data) => {
+          // console.log(data);
+          // console.log(path);
+          return data?.user === currentUser?._id && data?.video?._id === path;
+        });
+        console.log("rattt", ratingData);
+        // setRating(ratingdata?.rating);
+        // console.log(ratingdata);
+        // dispatch(fetchSuccess(videoRes?.data));
+      } catch (err) {}
+    };
+    fetchRating();
+  }, []);
+
   const handleLike = async () => {
-    await axios.put(`/users/like/${currentVideo._id}`);
+    await axios.put(`${api}/users/like/${currentVideo._id}`);
     dispatch(like(currentUser?._id));
   };
   const handleDislike = async () => {
-    await axios.put(`/users/dislike/${currentVideo?._id}`);
+    await axios.put(`${api}/users/dislike/${currentVideo?._id}`);
     dispatch(dislike(currentUser?._id));
   };
 
   const handleSub = async () => {
     currentUser.subscribedUsers.includes(channel?._id)
-      ? await axios.put(`/users/unsub/${channel?._id}`)
-      : await axios.put(`/users/sub/${channel?._id}`);
+      ? await axios.put(`${api}/users/unsub/${channel?._id}`)
+      : await axios.put(`${api}/users/sub/${channel?._id}`);
     dispatch(subscription(channel?._id));
   };
 
@@ -212,9 +319,34 @@ const Video = () => {
           </Subscribe>
         </Channel>
         <Hr />
+        <StarRatingContainer>
+          <div className="star-container">
+            {[1, 2, 3, 4, 5].map((data) => (
+              <span key={data}>
+                <FaStar
+                  className={`star ${data <= rating ? "active" : ""}`}
+                  onMouseOver={() => handleStarHover(data)}
+                  onClick={() => handleStarClick(data)}
+                />
+              </span>
+            ))}
+          </div>
+          <div className="rating-text">{`${
+            typeof rating === "undefined" ? "0" : rating
+          }.0`}</div>
+        </StarRatingContainer>
+        <br />
+        <br />
+        <br />
+
+        <RecommendationsVideo />
+        <br />
+        <br />
+
         <Comments videoId={currentVideo?._id} />
       </Content>
       <Recommendation tags={currentVideo?.tags} />
+      {/* <RecommendationsVideo /> */}
     </Container>
   );
 };

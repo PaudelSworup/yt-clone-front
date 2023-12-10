@@ -9,6 +9,8 @@ import Video from "./pages/Video";
 import SignIn from "./pages/SignIn";
 import Search from "./pages/Search";
 import { useSelector } from "react-redux";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Container = styled.div`
   display: flex;
@@ -51,6 +53,7 @@ function App() {
               </Routes>
             </Wrapper>
           </Main>
+          <ToastContainer />
         </BrowserRouter>
       </Container>
     </ThemeProvider>

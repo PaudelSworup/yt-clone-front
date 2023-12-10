@@ -7,6 +7,9 @@ import { auth, provider } from "../firebase";
 import { signInWithPopup } from "firebase/auth";
 import { async } from "@firebase/util";
 import { useNavigate } from "react-router-dom";
+import { api } from "../config";
+import { signUp } from "../apis/apis";
+import { toast } from "react-toastify";
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -80,7 +83,7 @@ const SignIn = () => {
     e.preventDefault();
     dispatch(loginStart());
     try {
-      const res = await axios.post("/auth/signin", { name, password });
+      const res = await axios.post(`${api}/auth/signin`, { name, password });
       dispatch(loginSuccess(res?.data));
       navigate("/");
     } catch (err) {
@@ -88,12 +91,28 @@ const SignIn = () => {
     }
   };
 
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    // dispatch(loginStart());
+    signUp({
+      name,
+      email,
+      password,
+    }).then((res) => {
+      if (res.success === true) {
+        toast.success(res.message, { position: "top-center" });
+      } else {
+        toast.error(res.error || res?.message, { position: "top-center" });
+      }
+    });
+  };
+
   const signInWithGoogle = async () => {
     dispatch(loginStart());
     signInWithPopup(auth, provider)
       .then((result) => {
         axios
-          .post("/auth/google", {
+          .post(`${api}/auth/google`, {
             name: result?.user?.displayName,
             email: result?.user?.email,
             img: result?.user?.photoURL,
@@ -142,7 +161,7 @@ const SignIn = () => {
           placeholder="password"
           onChange={(e) => setPassword(e?.target?.value)}
         />
-        <Button>Sign up</Button>
+        <Button onClick={handleSignup}>Sign up</Button>
       </Wrapper>
       <More>
         English(USA)
